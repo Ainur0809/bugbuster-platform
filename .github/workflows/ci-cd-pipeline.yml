@@ -56,6 +56,58 @@ concurrency:
 
 jobs:
   # ===================================================================
+  # JOB 0: TELEGRAM — «ПАЙПЛАЙН ЗАПУЩЕН»
+  # Без needs — стартует сразу, параллельно с деплоем: команда узнаёт,
+  # что пришли новые изменения и тесты уже в работе, не дожидаясь итога.
+  # ===================================================================
+  notify-start:
+    name: 📣 Notify pipeline started
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📣 Telegram — пайплайн запущен
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          ACTOR: ${{ github.actor }}
+          EVENT: ${{ github.event_name }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          COMMIT_MSG: ${{ github.event.head_commit.message }}
+        run: |
+          if [ -z "$TELEGRAM_BOT_TOKEN" ] || [ -z "$TELEGRAM_CHAT_ID" ]; then
+            echo "::warning::Секреты TELEGRAM_* не заданы — уведомление пропущено"
+            exit 0
+          fi
+
+          case "$EVENT" in
+            push)              TRIGGER="push в ${GITHUB_REF_NAME}" ;;
+            schedule)          TRIGGER="по расписанию ⏰" ;;
+            workflow_dispatch) TRIGGER="вручную 🖐" ;;
+            *)                 TRIGGER="$EVENT" ;;
+          esac
+
+          # Первая строка коммита, с экранированием символов HTML
+          COMMIT=$(printf '%s' "${COMMIT_MSG:-—}" | head -n1 | sed 's/&/\&amp;/g; s/</\&lt;/g; s/>/\&gt;/g')
+
+          TEXT="⚗️ <b>BugBuster Alchemy</b>
+          🚀 <b>Новая версия в пути!</b> Деплой магазина и автотесты запущены.
+
+          👤 Запустил: <b>${ACTOR}</b> (${TRIGGER})
+          📝 Коммит: <code>${GITHUB_SHA::7}</code> ${COMMIT}
+
+          ⏳ Итог придёт отдельным сообщением через несколько минут.
+          ⚙️ <a href=\"${RUN_URL}\">Следить за пайплайном</a>"
+
+          # Убираем отступы YAML в начале строк
+          TEXT=$(printf '%s' "$TEXT" | sed 's/^ *//')
+
+          curl -sS -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+            --data-urlencode "chat_id=${TELEGRAM_CHAT_ID}" \
+            --data-urlencode "text=${TEXT}" \
+            --data-urlencode "parse_mode=HTML" \
+            --data-urlencode "disable_web_page_preview=true" \
+            -o /dev/null -w "Telegram API HTTP %{http_code}\n"
+
+  # ===================================================================
   # JOB 1: ДЕПЛОЙ МАГАЗИНА НА GITHUB PAGES
   # ===================================================================
   deploy-shop:
@@ -300,3 +352,44 @@ jobs:
         run: |
           echo "::error::Автотесты упали — смотрите Allure-отчёт: ${SITE_URL}allure/${GITHUB_RUN_NUMBER}/"
           exit 1
+
+  # ===================================================================
+  # JOB 3: TELEGRAM — «ДЕПЛОЙ УПАЛ»
+  # Если deploy-shop упал, run-autotests пропускается целиком (needs),
+  # и его итоговое сообщение не отправится. Этот job закрывает эту дыру.
+  # if: failure() — запускается, только если упал job из needs.
+  # ===================================================================
+  notify-deploy-failure:
+    name: 📣 Notify deploy failure
+    runs-on: ubuntu-latest
+    needs: deploy-shop
+    if: failure()
+    steps:
+      - name: 📣 Telegram — деплой упал
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          ACTOR: ${{ github.actor }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          if [ -z "$TELEGRAM_BOT_TOKEN" ] || [ -z "$TELEGRAM_CHAT_ID" ]; then
+            echo "::warning::Секреты TELEGRAM_* не заданы — уведомление пропущено"
+            exit 0
+          fi
+
+          TEXT="⚗️ <b>BugBuster Alchemy</b>
+          💥 <b>Деплой магазина упал!</b> Автотесты не запускались.
+
+          👤 Запустил: <b>${ACTOR}</b>
+          📝 Коммит: <code>${GITHUB_SHA::7}</code>
+
+          ⚙️ <a href=\"${RUN_URL}\">Смотреть лог CI</a>"
+
+          TEXT=$(printf '%s' "$TEXT" | sed 's/^ *//')
+
+          curl -sS -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+            --data-urlencode "chat_id=${TELEGRAM_CHAT_ID}" \
+            --data-urlencode "text=${TEXT}" \
+            --data-urlencode "parse_mode=HTML" \
+            --data-urlencode "disable_web_page_preview=true" \
+            -o /dev/null -w "Telegram API HTTP %{http_code}\n"
