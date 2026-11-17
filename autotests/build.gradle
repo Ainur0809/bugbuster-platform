@@ -1,0 +1,99 @@
+// =====================================================================
+// build.gradle — сборка проекта автотестов BugBuster Alchemy
+// Стек: JDK 21 + Gradle (Groovy DSL) + Playwright for Java + JUnit 5 + Allure
+// =====================================================================
+
+plugins {
+    id 'java'
+    // Allure Gradle Plugin: задачи allureReport / allureServe, папка build/allure-results
+    id 'io.qameta.allure' version '2.12.0'
+}
+
+group = 'com.bugbuster'
+version = '1.0.0'
+
+// ---------- Версии библиотек (меняются в одном месте) ----------
+ext {
+    playwrightVersion = '1.49.0'
+    junitVersion      = '5.11.3'
+    allureVersion     = '2.29.0'
+}
+
+// ---------- Java 21 через toolchain ----------
+// Toolchain гарантирует компиляцию и запуск тестов именно на JDK 21
+// (аналог JavaVersion.VERSION_21, но надёжнее: Gradle сам найдёт/скачает нужный JDK).
+// Внимание: sourceCompatibility вместе с toolchain задавать нельзя — Gradle выдаст ошибку.
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    // Playwright for Java — управление браузером
+    testImplementation "com.microsoft.playwright:playwright:${playwrightVersion}"
+
+    // JUnit 5 (Jupiter) + launcher для Gradle 8/9
+    testImplementation platform("org.junit:junit-bom:${junitVersion}")
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+    // Allure: аннотации, Allure.step(...), вложения + интеграция с JUnit 5
+    testImplementation platform("io.qameta.allure:allure-bom:${allureVersion}")
+    testImplementation 'io.qameta.allure:allure-junit5'
+}
+
+// ---------- Настройки Allure-плагина ----------
+allure {
+    version = allureVersion           // версия CLI для allureReport / allureServe
+    adapter {
+        autoconfigure = false         // зависимости уже подключены вручную выше
+        aspectjWeaver = true          // нужен для @Step / @Attachment через AspectJ
+    }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+}
+
+// ---------- Запуск тестов ----------
+test {
+    useJUnitPlatform()
+
+    // Пробрасываем -DbaseUrl=... и -Dheadless=... из командной строки Gradle в JVM тестов.
+    // Если baseUrl не задан — тесты сами откроют локальный ../shop/index.html (см. TestConfig).
+    ['baseUrl', 'headless', 'slowMo', 'browser'].each { key ->
+        def value = System.getProperty(key)
+        if (value != null) systemProperty key, value
+    }
+    systemProperty 'file.encoding', 'UTF-8'
+
+    // Тесты UI всегда запускаем заново, даже если код не менялся
+    outputs.upToDateWhen { false }
+
+    testLogging {
+        events 'passed', 'skipped', 'failed'
+        exceptionFormat 'full'
+        showStandardStreams = false
+    }
+}
+
+// =====================================================================
+// Кастомная задача: установка браузеров Playwright.
+// В IntelliJ IDEA: вкладка Gradle → Tasks → playwright → playwrightInstall.
+// В CI (Linux) с системными зависимостями:  ./gradlew playwrightInstall -PwithDeps
+// =====================================================================
+tasks.register('playwrightInstall', JavaExec) {
+    group = 'playwright'
+    description = 'Скачивает браузер Chromium для Playwright (с -PwithDeps ещё и системные библиотеки Linux)'
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'com.microsoft.playwright.CLI'
+    def cliArgs = ['install']
+    if (project.hasProperty('withDeps')) cliArgs << '--with-deps'
+    cliArgs << 'chromium'
+    args cliArgs
+}

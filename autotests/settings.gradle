@@ -1,0 +1,12 @@
+// =====================================================================
+// settings.gradle — корневые настройки Gradle-проекта автотестов.
+// Папка /autotests открывается в IntelliJ IDEA как отдельный проект.
+// =====================================================================
+
+plugins {
+    // Позволяет Gradle самому скачать JDK 21, если на машине его нет
+    // (работает вместе с блоком java { toolchain { ... } } в build.gradle).
+    id 'org.gradle.toolchains.foojay-resolver-convention' version '0.8.0'
+}
+
+rootProject.name = 'bugbuster-autotests'

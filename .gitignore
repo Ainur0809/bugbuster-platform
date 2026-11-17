@@ -1,0 +1,17 @@
+# IntelliJ IDEA
+.idea/
+*.iml
+out/
+
+# Gradle
+autotests/.gradle/
+autotests/build/
+!autotests/gradle/wrapper/gradle-wrapper.jar
+
+# Allure (локальные прогоны)
+allure-results/
+allure-report/
+
+# OS
+.DS_Store
+Thumbs.db
