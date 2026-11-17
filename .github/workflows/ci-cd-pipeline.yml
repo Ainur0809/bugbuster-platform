@@ -285,9 +285,20 @@ jobs:
         run: |
           npm install --no-save allure@3.14.3
           npx allure generate autotests/build/allure-results --config notifications/allurerc.mjs
-          # Кладём обновлённую историю туда, что уйдёт в gh-pages/allure следующим шагом
-          mkdir -p allure-history
-          cp allure3-history.jsonl allure-history/allure3-history.jsonl
+
+      # Кладём обновлённую историю в allure-history/ — она уйдёт в gh-pages/allure следующим шагом.
+      # sudo нужен потому, что папку allure-history создал simple-elf/allure-report-action:
+      # это Docker-Action, он пишет файлы от root, и обычному пользователю раннера туда писать нельзя.
+      - name: 💾 Save Allure 3 history for gh-pages
+        if: always()
+        working-directory: .
+        run: |
+          if [ -f allure3-history.jsonl ]; then
+            sudo mkdir -p allure-history
+            sudo cp allure3-history.jsonl allure-history/allure3-history.jsonl
+          else
+            echo "::warning::allure3-history.jsonl не найден — история в этот раз не сохранится"
+          fi
 
       # Публикуем отчёт в подпапку allure/ ветки gh-pages.
       # keep_files: true — НЕ трогаем магазин в корне ветки и старые отчёты.
