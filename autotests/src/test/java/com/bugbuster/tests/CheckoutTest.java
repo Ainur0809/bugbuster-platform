@@ -38,7 +38,7 @@ class CheckoutTest extends BaseTest {
      * Сквозной (E2E) сценарий покупки с промокодом DEPLOYFRIDAY.
      * <p>
      * Амулет (500) + Эликсир (150) = 650 SP → промокод −20% (−130) → 520 SP.
-     * Затем заполняем форму и проверяем экран «Заказ принят» с номером заказа и суммой 520 SP.
+     * Затем заполняем форму и проверяем окно «Заказ призван!» с номером заказа и суммой 520 SP.
      * <p>
      * <b>Именно этот тест «ловит» баг CHAOS_MODE</b>: при наценке итог станет 780 SP.
      */
@@ -64,10 +64,10 @@ class CheckoutTest extends BaseTest {
         });
 
         cart.proceedToCheckout()
-                .fill("Ада Лавлейс", "ada@bugbuster.dev", "Башня QA, этаж 42")
+                .fill("@ada.lovelace", "ada@bugbuster.dev", "github.com/guild/prod-on-fire")
                 .submit();
 
-        Allure.step("Проверить экран успешного заказа", () -> {
+        Allure.step("Проверить окно «Заказ призван!»", () -> {
             assertThat(checkout.successScreen()).isVisible();
             assertThat(checkout.orderId()).hasText(Pattern.compile("^BB-[A-Z0-9]{6}$"));
             assertThat(checkout.orderTotal()).hasText(expectedTotal + " SP");
@@ -78,8 +78,8 @@ class CheckoutTest extends BaseTest {
     /**
      * Негативный тест: отправка пустой формы заказа.
      * <p>
-     * Ожидание: под каждым из трёх полей появляется текст ошибки,
-     * поля подсвечены как невалидные, экран успеха НЕ показан.
+     * Ожидание: под обоими обязательными полями (имя и email) появляется текст ошибки,
+     * поля подсвечены как невалидные, окно успеха НЕ показано.
      */
     @Test
     @Story("Валидация формы")
@@ -92,10 +92,10 @@ class CheckoutTest extends BaseTest {
 
         checkout.submit();
 
-        Allure.step("Проверить ошибки валидации под каждым полем", () -> {
-            assertThat(checkout.error("name")).hasText("Введите имя (минимум 2 символа)");
-            assertThat(checkout.error("email")).hasText("Введите корректный e-mail");
-            assertThat(checkout.error("address")).hasText("Введите адрес (минимум 5 символов)");
+        Allure.step("Проверить ошибки валидации под обязательными полями", () -> {
+            assertThat(checkout.error("name")).hasText("Назовите своего героя (минимум 2 символа)");
+            assertThat(checkout.error("email")).hasText("Нужен корректный email для отправки свитка");
+            assertThat(checkout.input("name")).hasAttribute("aria-invalid", "true");
             assertThat(checkout.input("email")).hasAttribute("aria-invalid", "true");
         });
 
@@ -109,7 +109,7 @@ class CheckoutTest extends BaseTest {
     /**
      * Негативный тест: ввод несуществующего промокода.
      * <p>
-     * Ожидание: сообщение «Промокод недействителен», итог равен подытогу (скидки нет).
+     * Ожидание: сообщение «✗ Промокод недействителен», итог равен подытогу (скидки нет).
      */
     @Test
     @Story("Покупка с промокодом")
@@ -122,7 +122,8 @@ class CheckoutTest extends BaseTest {
         cart.applyPromo("FREEBUGS");
 
         Allure.step("Проверить сообщение об ошибке и отсутствие скидки", () -> {
-            assertThat(cart.promoMessage()).hasText("Промокод недействителен");
+            assertThat(cart.promoMessage()).containsText("Промокод недействителен");
+            assertThat(cart.promoMessage()).hasAttribute("data-state", "error");
             assertThat(cart.total()).hasText("500 SP");
         });
     }

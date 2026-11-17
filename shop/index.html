@@ -1,208 +1,236 @@
 <!DOCTYPE html>
-<html lang="ru" class="dark">
+<html lang="ru">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>BugBuster Alchemy — Алхимическая лавка для IT-шников</title>
-  <meta name="description" content="Магазин магических артефактов и зелий для разработчиков и тестировщиков. Цены в сторипоинтах." />
+  <meta name="description" content="Зелья, свитки и артефакты для разработчиков и тестировщиков. Цены в сторипоинтах (SP)." />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚗️</text></svg>" />
 
-  <!-- Шрифты: Orbitron для заголовков (киберпанк), JetBrains Mono для цифр и кода -->
+  <!-- Шрифты: Manrope — гротеск для текста, JetBrains Mono — «IDE-шрифт» для цен и кодов -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800&family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
 
-  <!-- Tailwind CSS через CDN (без сборки) -->
+  <!-- Tailwind CSS через CDN: утилиты для сетки, отступов и типографики -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
       theme: {
         extend: {
           colors: {
-            void: '#07040f',
-            panel: '#120a24',
-            neon: { violet: '#b56cff', green: '#39ff88', pink: '#ff4fd8' }
+            abyss: '#09090b',
+            night: '#0f172a',
+            emerald: { neon: '#00ff88', DEFAULT: '#10b981' },
+            arcane: { DEFAULT: '#8b5cf6', light: '#a855f7' },
+            danger: '#ef4444'
           },
           fontFamily: {
-            display: ['Orbitron', 'sans-serif'],
-            mono: ['"JetBrains Mono"', 'monospace'],
-            body: ['Inter', 'sans-serif']
+            sans: ['Manrope', 'system-ui', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'ui-monospace', 'monospace']
           }
         }
       }
     };
   </script>
+
+  <!-- Кастомные эффекты: неон, стекло, анимации, скроллбары -->
   <link rel="stylesheet" href="style.css" />
 </head>
 
-<body class="bg-void text-slate-200 font-body min-h-screen">
-  <!-- Фоновая «алхимическая» сетка и свечение -->
-  <div class="bg-grid" aria-hidden="true"></div>
+<body class="font-sans text-slate-200 antialiased">
+  <!-- Декоративный фон: туманности, руны и сетка -->
+  <div class="arcane-bg" aria-hidden="true">
+    <span class="nebula nebula-violet"></span>
+    <span class="nebula nebula-emerald"></span>
+  </div>
 
-  <!-- ===================== ШАПКА ===================== -->
-  <header class="sticky top-0 z-30 backdrop-blur bg-void/70 border-b border-neon-violet/20">
-    <div class="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between gap-4">
-      <a href="#" class="flex items-center gap-3" data-testid="logo">
-        <span class="text-3xl">⚗️</span>
-        <span class="font-display font-extrabold text-lg sm:text-xl tracking-wider neon-text">BugBuster&nbsp;Alchemy</span>
-      </a>
-      <button
-        type="button"
-        class="cart-btn relative flex items-center gap-2 px-4 py-2 rounded-xl border border-neon-green/40 hover:border-neon-green transition"
-        data-testid="cart-button"
-        aria-label="Открыть корзину"
-      >
-        <span class="text-xl">🧺</span>
-        <span class="hidden sm:inline font-mono text-sm">Корзина</span>
-        <span
-          class="badge absolute -top-2 -right-2 min-w-[1.5rem] h-6 px-1 rounded-full text-xs font-mono font-bold flex items-center justify-center"
-          data-testid="cart-count"
-        >0</span>
-      </button>
+  <!-- ============================== ШАПКА ============================== -->
+  <header class="site-header relative sm:sticky top-0 z-30" data-testid="header">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex flex-col gap-4">
+      <div class="flex items-center justify-between gap-4">
+        <!-- Логотип -->
+        <a href="#" class="flex items-center gap-3 group" data-testid="logo" aria-label="BugBuster Alchemy — на главную">
+          <span class="logo-sigil" aria-hidden="true">⚗️</span>
+          <span class="leading-tight">
+            <span class="block text-lg sm:text-xl font-extrabold tracking-tight neon-title">BugBuster Alchemy</span>
+            <span class="block font-mono text-[11px] text-slate-500">// алхимическая лавка для IT-шников</span>
+          </span>
+        </a>
+
+        <!-- Кнопка корзины: счётчик + сумма -->
+        <button type="button" class="cart-trigger" data-testid="cart-button" aria-label="Открыть инвентарь (корзину)" aria-controls="cart-drawer" aria-expanded="false">
+          <span class="text-xl" aria-hidden="true">🎒</span>
+          <span class="hidden sm:flex flex-col items-start leading-tight">
+            <span class="text-[11px] uppercase tracking-widest text-slate-400">Инвентарь</span>
+            <span class="font-mono text-sm text-emerald-neon" data-testid="cart-header-total">0 SP</span>
+          </span>
+          <span class="cart-badge" data-testid="cart-badge">0</span>
+        </button>
+      </div>
+
+      <!-- Поиск и фильтры -->
+      <div class="flex flex-col lg:flex-row gap-3 lg:items-center">
+        <label class="search-box flex-1">
+          <span class="sr-only">Поиск по названию товара</span>
+          <span class="search-icon" aria-hidden="true">🔮</span>
+          <input
+            type="search"
+            class="search-input"
+            placeholder="Поиск артефакта… например, «уточка»"
+            autocomplete="off"
+            data-testid="search-input"
+          />
+          <kbd class="search-kbd" aria-hidden="true">/</kbd>
+        </label>
+
+        <nav class="flex flex-wrap gap-2" role="group" aria-label="Фильтр по категориям">
+          <button type="button" class="filter-chip is-active" data-filter="all" data-testid="filter-all" aria-pressed="true">✨ Все</button>
+          <button type="button" class="filter-chip" data-filter="potions" data-testid="filter-potions" aria-pressed="false">🧪 Зелья</button>
+          <button type="button" class="filter-chip" data-filter="artifacts" data-testid="filter-artifacts" aria-pressed="false">💎 Артефакты</button>
+          <button type="button" class="filter-chip" data-filter="scrolls" data-testid="filter-scrolls" aria-pressed="false">📜 Свитки</button>
+        </nav>
+      </div>
     </div>
   </header>
 
-  <main class="relative max-w-6xl mx-auto px-4 pb-24">
-    <!-- ===================== HERO ===================== -->
-    <section class="py-12 sm:py-16 text-center">
-      <p class="font-mono text-neon-green text-xs sm:text-sm tracking-[0.3em] uppercase mb-4">// est. 2026 · sprint 42</p>
-      <h1 class="font-display font-extrabold text-3xl sm:text-5xl leading-tight mb-4" data-testid="hero-title">
-        Алхимическая лавка<br /><span class="neon-gradient">для IT-шников</span>
+  <main class="relative max-w-7xl mx-auto px-4 sm:px-6 pb-24">
+    <!-- ============================== HERO ============================== -->
+    <section class="hero py-10 sm:py-14" data-testid="hero">
+      <p class="font-mono text-xs sm:text-sm text-emerald-neon tracking-[0.25em] uppercase mb-3">&gt; sprint 42 · release candidate</p>
+      <h1 class="text-3xl sm:text-5xl font-extrabold tracking-tight leading-[1.1] max-w-3xl" data-testid="hero-title">
+        Снаряжение для героев, <span class="text-gradient">которые деплоят в пятницу</span>
       </h1>
-      <p class="max-w-2xl mx-auto text-slate-400">
-        Зелья, свитки и артефакты, проверенные на проде. Оплата только в <b class="text-neon-violet">Сторипоинтах (SP)</b>.
-        Промокод для смелых: <code class="font-mono text-neon-green">DEPLOYFRIDAY</code>.
+      <p class="mt-4 max-w-2xl text-slate-400">
+        Зелья, свитки и артефакты, проверенные на проде. Оплата только в <b class="text-arcane-light">Сторипоинтах</b>.
+        Для смелых — промокод <code class="promo-hint" data-testid="promo-hint">DEPLOYFRIDAY</code>.
       </p>
     </section>
 
-    <!-- ===================== ПАНЕЛЬ ФИЛЬТРОВ ===================== -->
-    <section class="glass rounded-2xl p-4 mb-8 flex flex-col md:flex-row gap-4 md:items-center md:justify-between" data-testid="catalog-controls">
-      <div class="relative flex-1">
-        <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500">🔮</span>
-        <input
-          type="search"
-          placeholder="Найти артефакт… (например, «уточка»)"
-          class="input-neon w-full pl-10 pr-4 py-3 rounded-xl"
-          data-testid="search-input"
-          aria-label="Поиск по каталогу"
-        />
-      </div>
-      <div class="flex flex-wrap gap-2" role="group" aria-label="Фильтр по категории">
-        <button type="button" class="filter-btn active" data-filter="all" data-testid="filter-all">Все</button>
-        <button type="button" class="filter-btn" data-filter="potion" data-testid="filter-potion">🧪 Зелья</button>
-        <button type="button" class="filter-btn" data-filter="scroll" data-testid="filter-scroll">📜 Свитки</button>
-        <button type="button" class="filter-btn" data-filter="artifact" data-testid="filter-artifact">💎 Артефакты</button>
-      </div>
-    </section>
+    <!-- ============================== КАТАЛОГ ============================== -->
+    <div class="flex items-baseline justify-between mb-4">
+      <h2 class="text-lg font-bold">Витрина артефактов</h2>
+      <p class="font-mono text-xs text-slate-500">найдено: <span data-testid="products-count">0</span></p>
+    </div>
 
-    <!-- ===================== КАТАЛОГ ===================== -->
-    <p class="font-mono text-xs text-slate-500 mb-3">
-      Найдено товаров: <span data-testid="products-count">0</span>
-    </p>
-    <section class="grid gap-6 sm:grid-cols-2 lg:grid-cols-4" data-testid="product-grid"></section>
+    <section class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" data-testid="product-grid" aria-live="polite"></section>
 
-    <div class="hidden text-center py-16" data-testid="empty-catalog">
-      <p class="text-5xl mb-4">🕳️</p>
-      <p class="font-display text-xl mb-2">404: Артефакт не найден</p>
-      <p class="text-slate-500">Попробуйте другое заклинание поиска.</p>
+    <div class="empty-state hidden" data-testid="empty-catalog">
+      <p class="text-5xl mb-3" aria-hidden="true">🕳️</p>
+      <p class="text-xl font-bold mb-1">404: артефакт не найден</p>
+      <p class="text-slate-500">Заклинание поиска не сработало. Попробуйте другое слово.</p>
     </div>
   </main>
 
-  <footer class="border-t border-neon-violet/20 py-6 text-center text-xs font-mono text-slate-500">
-    BugBuster Alchemy © 2026 · Сделано с ☕ и 🐛 · <span data-testid="build-info">build: local</span>
+  <footer class="border-t border-white/5 py-6 text-center font-mono text-xs text-slate-500">
+    BugBuster Alchemy © 2026 · сварено на ☕ и 🐛 · <span data-testid="build-info">build: local</span>
   </footer>
 
-  <!-- ===================== МОДАЛЬНОЕ ОКНО КОРЗИНЫ ===================== -->
-  <div class="modal-backdrop hidden" data-testid="cart-modal" role="dialog" aria-modal="true" aria-labelledby="cart-title">
-    <div class="modal-panel glass rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
-      <div class="flex items-center justify-between px-6 py-4 border-b border-neon-violet/20">
-        <h2 id="cart-title" class="font-display text-lg" data-testid="cart-title">🧺 Корзина алхимика</h2>
-        <button type="button" class="text-2xl leading-none text-slate-400 hover:text-neon-pink" data-testid="cart-close" aria-label="Закрыть">×</button>
+  <!-- ============================== КОРЗИНА (DRAWER) ============================== -->
+  <div class="drawer-overlay" data-testid="cart-overlay"></div>
+  <aside id="cart-drawer" class="drawer" data-testid="cart-modal" role="dialog" aria-modal="true" aria-labelledby="cart-title" aria-hidden="true">
+    <header class="flex items-center justify-between px-6 py-5 border-b border-white/10">
+      <div>
+        <h2 id="cart-title" class="text-lg font-extrabold" data-testid="cart-title">🎒 Инвентарь героя</h2>
+        <p class="font-mono text-xs text-slate-500" data-testid="cart-step-label">шаг 1/2 · проверка снаряжения</p>
+      </div>
+      <button type="button" class="icon-btn" data-testid="cart-close-btn" aria-label="Закрыть корзину">✕</button>
+    </header>
+
+    <!-- Шаг 1: содержимое корзины -->
+    <div class="drawer-body" data-testid="cart-step">
+      <div class="flex-1 overflow-y-auto px-6 py-4 scroll-arcane">
+        <div class="empty-cart hidden" data-testid="cart-empty">
+          <p class="text-5xl mb-3" aria-hidden="true">🫙</p>
+          <p class="font-bold">Инвентарь пуст</p>
+          <p class="text-sm text-slate-500">Как бэклог в пятницу вечером.</p>
+        </div>
+        <ul class="space-y-3" data-testid="cart-items"></ul>
       </div>
 
-      <!-- Шаг 1: содержимое корзины -->
-      <div data-testid="cart-step">
-        <div class="px-6 py-4">
-          <p class="hidden text-center py-8 text-slate-400" data-testid="cart-empty">
-            <span class="block text-4xl mb-2">🫙</span>Корзина пуста — как бэклог в пятницу вечером.
-          </p>
-          <ul class="space-y-3" data-testid="cart-items"></ul>
-        </div>
-
-        <div class="px-6 pb-6 space-y-4" data-testid="cart-summary">
-          <!-- Промокод -->
-          <div>
-            <div class="flex gap-2">
-              <input
-                type="text"
-                placeholder="Промокод"
-                class="input-neon flex-1 px-3 py-2 rounded-lg uppercase font-mono"
-                data-testid="promo-input"
-                aria-label="Промокод"
-              />
-              <button type="button" class="btn-secondary px-4 py-2 rounded-lg" data-testid="promo-apply">Применить</button>
-            </div>
-            <p class="text-xs mt-2 min-h-[1rem]" data-testid="promo-message" aria-live="polite"></p>
+      <div class="px-6 py-5 border-t border-white/10 space-y-4 bg-black/20" data-testid="cart-summary">
+        <!-- Промокод -->
+        <div>
+          <div class="flex gap-2">
+            <label class="flex-1">
+              <span class="sr-only">Промокод</span>
+              <input type="text" class="field font-mono uppercase" placeholder="ПРОМОКОД" autocomplete="off" spellcheck="false" data-testid="promo-input" />
+            </label>
+            <button type="button" class="btn btn-outline" data-testid="apply-promo-btn">Применить</button>
           </div>
+          <p class="promo-message" data-testid="promo-message" data-state="idle" aria-live="polite"></p>
+        </div>
 
-          <!-- Итоги -->
-          <dl class="font-mono text-sm space-y-1">
-            <div class="flex justify-between"><dt>Подытог</dt><dd data-testid="cart-subtotal">0 SP</dd></div>
-            <div class="flex justify-between hidden" data-testid="discount-row">
-              <dt>Промокод</dt><dd class="text-neon-green" data-testid="cart-discount">0 SP</dd>
-            </div>
-            <div class="flex justify-between text-lg font-bold pt-2 border-t border-neon-violet/20">
-              <dt>Итого</dt><dd class="neon-text" data-testid="cart-total">0 SP</dd>
-            </div>
-          </dl>
-
-          <div class="flex gap-3">
-            <button type="button" class="btn-ghost flex-1 py-3 rounded-xl" data-testid="clear-cart">Очистить</button>
-            <button type="button" class="btn-primary flex-[2] py-3 rounded-xl font-bold" data-testid="checkout-button">Оформить заказ →</button>
+        <!-- Итоги -->
+        <dl class="font-mono text-sm space-y-1.5">
+          <div class="flex justify-between text-slate-400">
+            <dt>Сумма без скидки</dt><dd data-testid="subtotal-price">0 SP</dd>
           </div>
+          <div class="flex justify-between text-emerald-neon hidden" data-testid="discount-row">
+            <dt>Промокод DEPLOYFRIDAY</dt><dd data-testid="discount-price">−0 SP</dd>
+          </div>
+          <div class="flex justify-between items-baseline pt-2 border-t border-white/10">
+            <dt class="font-sans font-bold text-base text-slate-200">К оплате</dt>
+            <dd class="text-2xl font-bold price-glow" data-testid="total-price">0 SP</dd>
+          </div>
+        </dl>
+
+        <div class="flex gap-3">
+          <button type="button" class="btn btn-danger flex-1" data-testid="clear-cart-btn">Очистить инвентарь</button>
+          <button type="button" class="btn btn-primary flex-[1.4]" data-testid="checkout-btn">Оформить →</button>
         </div>
       </div>
+    </div>
 
-      <!-- Шаг 2: форма оформления заказа -->
-      <form class="hidden px-6 py-6 space-y-4" data-testid="checkout-form" novalidate>
-        <p class="text-sm text-slate-400">К оплате: <b class="neon-text font-mono" data-testid="checkout-total">0 SP</b></p>
-
-        <label class="block">
-          <span class="text-sm">Имя мага *</span>
-          <input type="text" name="name" class="input-neon w-full mt-1 px-3 py-2 rounded-lg" data-testid="input-name" autocomplete="name" />
-          <span class="field-error" data-testid="error-name"></span>
-        </label>
-
-        <label class="block">
-          <span class="text-sm">E-mail для совиной почты *</span>
-          <input type="email" name="email" class="input-neon w-full mt-1 px-3 py-2 rounded-lg" data-testid="input-email" autocomplete="email" />
-          <span class="field-error" data-testid="error-email"></span>
-        </label>
-
-        <label class="block">
-          <span class="text-sm">Адрес башни (доставки) *</span>
-          <input type="text" name="address" class="input-neon w-full mt-1 px-3 py-2 rounded-lg" data-testid="input-address" autocomplete="street-address" />
-          <span class="field-error" data-testid="error-address"></span>
-        </label>
-
-        <div class="flex gap-3 pt-2">
-          <button type="button" class="btn-ghost flex-1 py-3 rounded-xl" data-testid="back-to-cart">← Назад</button>
-          <button type="submit" class="btn-primary flex-[2] py-3 rounded-xl font-bold" data-testid="submit-order">Подтвердить заказ</button>
+    <!-- Шаг 2: оформление заказа -->
+    <form class="drawer-body hidden" data-testid="checkout-form" novalidate>
+      <div class="flex-1 overflow-y-auto px-6 py-5 space-y-5 scroll-arcane">
+        <div class="checkout-total-card">
+          <span class="text-sm text-slate-400">К оплате</span>
+          <span class="font-mono text-xl font-bold price-glow" data-testid="checkout-total">0 SP</span>
         </div>
-      </form>
 
-      <!-- Шаг 3: успешный заказ -->
-      <div class="hidden px-6 py-10 text-center" data-testid="order-success">
-        <p class="text-6xl mb-4">✨</p>
-        <h3 class="font-display text-xl mb-2">Заказ принят!</h3>
-        <p class="text-slate-400 mb-1">Номер заказа: <b class="font-mono text-neon-green" data-testid="order-id"></b></p>
-        <p class="text-slate-400 mb-6">Списано: <b class="font-mono neon-text" data-testid="order-total"></b></p>
-        <button type="button" class="btn-primary px-6 py-3 rounded-xl" data-testid="continue-shopping">Вернуться в лавку</button>
+        <label class="block">
+          <span class="field-label">Имя героя / ник в Slack <b class="text-danger">*</b></span>
+          <input type="text" name="name" class="field" placeholder="@ada.lovelace" autocomplete="nickname" data-testid="checkout-name" />
+          <span class="field-error" data-testid="error-message" data-field="name" aria-live="polite"></span>
+        </label>
+
+        <label class="block">
+          <span class="field-label">Email для отправки свитка <b class="text-danger">*</b></span>
+          <input type="email" name="email" class="field" placeholder="hero@guild.dev" autocomplete="email" data-testid="checkout-email" />
+          <span class="field-error" data-testid="error-message" data-field="email" aria-live="polite"></span>
+        </label>
+
+        <label class="block">
+          <span class="field-label">Адрес репозитория / комментарий</span>
+          <textarea name="comment" rows="3" class="field resize-none" placeholder="github.com/guild/prod-on-fire — доставить до релиза" data-testid="checkout-comment"></textarea>
+        </label>
       </div>
+
+      <div class="px-6 py-5 border-t border-white/10 flex gap-3 bg-black/20">
+        <button type="button" class="btn btn-ghost flex-1" data-testid="back-to-cart-btn">← Назад</button>
+        <button type="submit" class="btn btn-primary flex-[1.4]" data-testid="submit-order-btn">Призвать заказ ✨</button>
+      </div>
+    </form>
+  </aside>
+
+  <!-- ============================== УСПЕШНЫЙ ЗАКАЗ ============================== -->
+  <div class="success-backdrop hidden" data-testid="order-success-modal" role="dialog" aria-modal="true" aria-labelledby="success-title">
+    <div class="success-card">
+      <div class="summon-circle" aria-hidden="true"><span>✨</span></div>
+      <h2 id="success-title" class="text-2xl font-extrabold mb-2">Заказ призван!</h2>
+      <p class="text-slate-400 mb-5">Совиная почта уже летит к вам со свитком подтверждения.</p>
+      <dl class="font-mono text-sm space-y-2 mb-6 text-left success-receipt">
+        <div class="flex justify-between"><dt class="text-slate-500">Номер заказа</dt><dd class="text-emerald-neon" data-testid="order-id"></dd></div>
+        <div class="flex justify-between"><dt class="text-slate-500">Списано</dt><dd class="font-bold" data-testid="order-total"></dd></div>
+      </dl>
+      <button type="button" class="btn btn-primary w-full" data-testid="close-success-btn">Вернуться в лавку</button>
     </div>
   </div>
 
-  <!-- Всплывающее уведомление -->
-  <div class="toast" data-testid="toast" role="status" aria-live="polite"></div>
+  <!-- Тост-уведомления -->
+  <div class="toast-stack" data-testid="toast-container" aria-live="polite"></div>
 
   <script src="app.js"></script>
 </body>

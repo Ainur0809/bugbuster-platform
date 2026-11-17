@@ -29,7 +29,7 @@ public abstract class BasePage {
      * Playwright по умолчанию ищет именно {@code data-testid}, поэтому локаторы
      * не зависят от CSS-классов и текста — дизайнер может менять вёрстку без поломки тестов.
      *
-     * @param testId значение атрибута, например {@code "cart-total"}
+     * @param testId значение атрибута, например {@code "total-price"}
      * @return ленивый локатор элемента (поиск происходит в момент действия/проверки)
      */
     protected Locator byTestId(String testId) {

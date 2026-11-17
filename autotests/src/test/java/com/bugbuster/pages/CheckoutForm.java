@@ -5,8 +5,8 @@ import com.microsoft.playwright.Page;
 import io.qameta.allure.Allure;
 
 /**
- * Page Object формы оформления заказа (второй шаг модального окна корзины)
- * и экрана успешного заказа (третий шаг).
+ * Page Object формы оформления заказа (второй шаг в панели корзины)
+ * и модального окна «Заказ призван!».
  */
 public class CheckoutForm extends BasePage {
 
@@ -29,50 +29,53 @@ public class CheckoutForm extends BasePage {
     }
 
     /**
-     * Заполняет все поля формы.
+     * Заполняет поля формы.
      *
-     * @param name    имя покупателя
-     * @param email   e-mail покупателя
-     * @param address адрес доставки
+     * @param name    имя героя / ник в Slack (обязательное поле)
+     * @param email   email для отправки свитка (обязательное поле)
+     * @param comment адрес репозитория или комментарий (необязательное поле)
      * @return этот же Page Object
      */
-    public CheckoutForm fill(String name, String email, String address) {
-        Allure.step("Заполнить форму: " + name + ", " + email + ", " + address, () -> {
-            byTestId("input-name").fill(name);
-            byTestId("input-email").fill(email);
-            byTestId("input-address").fill(address);
+    public CheckoutForm fill(String name, String email, String comment) {
+        Allure.step("Заполнить форму: " + name + ", " + email + ", " + comment, () -> {
+            input("name").fill(name);
+            input("email").fill(email);
+            input("comment").fill(comment);
         });
         return this;
     }
 
     /**
-     * Нажимает кнопку «Подтвердить заказ».
+     * Нажимает кнопку «Призвать заказ».
      *
      * @return этот же Page Object
      */
     public CheckoutForm submit() {
-        Allure.step("Нажать «Подтвердить заказ»", () -> byTestId("submit-order").click());
+        Allure.step("Нажать «Призвать заказ»", () -> byTestId("submit-order-btn").click());
         return this;
     }
 
     /**
      * Возвращает локатор текста ошибки под указанным полем.
+     * <p>
+     * У всех ошибок одинаковый {@code data-testid="error-message"},
+     * а поле различается атрибутом {@code data-field}.
      *
-     * @param field имя поля: {@code name}, {@code email} или {@code address}
-     * @return локатор {@code [data-testid=error-<field>]}
+     * @param field имя поля: {@code name} или {@code email}
+     * @return локатор {@code [data-testid=error-message][data-field=<field>]}
      */
     public Locator error(String field) {
-        return byTestId("error-" + field);
+        return page.locator("[data-testid='error-message'][data-field='" + field + "']");
     }
 
     /**
      * Возвращает локатор поля ввода.
      *
-     * @param field имя поля: {@code name}, {@code email} или {@code address}
-     * @return локатор {@code [data-testid=input-<field>]}
+     * @param field имя поля: {@code name}, {@code email} или {@code comment}
+     * @return локатор {@code [data-testid=checkout-<field>]}
      */
     public Locator input(String field) {
-        return byTestId("input-" + field);
+        return byTestId("checkout-" + field);
     }
 
     /**
@@ -85,16 +88,16 @@ public class CheckoutForm extends BasePage {
     }
 
     /**
-     * Возвращает локатор экрана «Заказ принят».
+     * Возвращает локатор модального окна «Заказ призван!».
      *
-     * @return локатор {@code [data-testid=order-success]}
+     * @return локатор {@code [data-testid=order-success-modal]}
      */
     public Locator successScreen() {
-        return byTestId("order-success");
+        return byTestId("order-success-modal");
     }
 
     /**
-     * Возвращает локатор номера заказа на экране успеха.
+     * Возвращает локатор номера заказа в окне успеха.
      *
      * @return локатор {@code [data-testid=order-id]}
      */
@@ -103,7 +106,7 @@ public class CheckoutForm extends BasePage {
     }
 
     /**
-     * Возвращает локатор списанной суммы на экране успеха.
+     * Возвращает локатор списанной суммы в окне успеха.
      *
      * @return локатор {@code [data-testid=order-total]}
      */

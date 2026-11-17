@@ -6,7 +6,7 @@ import com.microsoft.playwright.Page;
 import io.qameta.allure.Allure;
 
 /**
- * Page Object модального окна корзины: позиции, количество, промокод, итоги и кнопки действий.
+ * Page Object выдвижной панели корзины (drawer): позиции, количество, промокод, итоги и кнопки действий.
  */
 public class CartModal extends BasePage {
 
@@ -55,7 +55,7 @@ public class CartModal extends BasePage {
      */
     public CartModal increaseQty(String productName) {
         Allure.step("Увеличить количество «" + productName + "» на 1",
-                () -> item(productName).getByTestId("qty-increase").click());
+                () -> item(productName).getByTestId("increase-qty-btn").click());
         return this;
     }
 
@@ -67,19 +67,19 @@ public class CartModal extends BasePage {
      */
     public CartModal decreaseQty(String productName) {
         Allure.step("Уменьшить количество «" + productName + "» на 1",
-                () -> item(productName).getByTestId("qty-decrease").click());
+                () -> item(productName).getByTestId("decrease-qty-btn").click());
         return this;
     }
 
     /**
-     * Удаляет позицию из корзины кнопкой с корзиной-мусоркой.
+     * Удаляет позицию из корзины кнопкой «Удалить».
      *
      * @param productName название товара в корзине
      * @return этот же Page Object
      */
     public CartModal removeItem(String productName) {
         Allure.step("Удалить из корзины «" + productName + "»",
-                () -> item(productName).getByTestId("cart-item-remove").click());
+                () -> item(productName).getByTestId("remove-item-btn").click());
         return this;
     }
 
@@ -92,47 +92,47 @@ public class CartModal extends BasePage {
     public CartModal applyPromo(String code) {
         Allure.step("Применить промокод " + code, () -> {
             byTestId("promo-input").fill(code);
-            byTestId("promo-apply").click();
+            byTestId("apply-promo-btn").click();
         });
         return this;
     }
 
     /**
-     * Нажимает кнопку «Очистить» — удаляет все позиции.
+     * Нажимает кнопку «Очистить инвентарь» — удаляет все позиции.
      *
      * @return этот же Page Object
      */
     public CartModal clear() {
-        Allure.step("Очистить корзину", () -> byTestId("clear-cart").click());
+        Allure.step("Очистить корзину", () -> byTestId("clear-cart-btn").click());
         return this;
     }
 
     /**
-     * Переходит к форме оформления заказа кнопкой «Оформить заказ».
+     * Переходит к форме оформления заказа кнопкой «Оформить».
      *
      * @return Page Object формы оформления заказа
      */
     public CheckoutForm proceedToCheckout() {
-        Allure.step("Перейти к оформлению заказа", () -> byTestId("checkout-button").click());
+        Allure.step("Перейти к оформлению заказа", () -> byTestId("checkout-btn").click());
         return new CheckoutForm(page);
     }
 
     /**
      * Возвращает локатор подытога (сумма без скидки).
      *
-     * @return локатор {@code [data-testid=cart-subtotal]}
+     * @return локатор {@code [data-testid=subtotal-price]}
      */
     public Locator subtotal() {
-        return byTestId("cart-subtotal");
+        return byTestId("subtotal-price");
     }
 
     /**
      * Возвращает локатор итоговой суммы к оплате.
      *
-     * @return локатор {@code [data-testid=cart-total]}
+     * @return локатор {@code [data-testid=total-price]}
      */
     public Locator total() {
-        return byTestId("cart-total");
+        return byTestId("total-price");
     }
 
     /**
@@ -145,7 +145,7 @@ public class CartModal extends BasePage {
     }
 
     /**
-     * Возвращает локатор сообщения «Корзина пуста».
+     * Возвращает локатор сообщения «Инвентарь пуст».
      *
      * @return локатор {@code [data-testid=cart-empty]}
      */
@@ -154,12 +154,12 @@ public class CartModal extends BasePage {
     }
 
     /**
-     * Возвращает локатор кнопки «Оформить заказ».
+     * Возвращает локатор кнопки «Оформить».
      *
-     * @return локатор {@code [data-testid=checkout-button]}
+     * @return локатор {@code [data-testid=checkout-btn]}
      */
     public Locator checkoutButton() {
-        return byTestId("checkout-button");
+        return byTestId("checkout-btn");
     }
 
     /**

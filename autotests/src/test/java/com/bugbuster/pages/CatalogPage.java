@@ -62,13 +62,13 @@ public class CatalogPage extends BasePage {
      * @return список названий в порядке отображения
      */
     public List<String> visibleProductNames() {
-        return byTestId("product-name").allTextContents();
+        return byTestId("product-title").allTextContents();
     }
 
     /**
      * Возвращает значения атрибута {@code data-category} всех видимых карточек.
      *
-     * @return список категорий: potion / scroll / artifact
+     * @return список категорий: potions / artifacts / scrolls
      */
     public List<String> visibleCategories() {
         return productCards().all().stream()
@@ -90,7 +90,7 @@ public class CatalogPage extends BasePage {
     /**
      * Нажимает кнопку фильтра по категории.
      *
-     * @param category значение фильтра: {@code all}, {@code potion}, {@code scroll} или {@code artifact}
+     * @param category значение фильтра: {@code all}, {@code potions}, {@code artifacts} или {@code scrolls}
      * @return этот же Page Object
      */
     public CatalogPage filterBy(String category) {
@@ -100,24 +100,24 @@ public class CatalogPage extends BasePage {
     }
 
     /**
-     * Добавляет товар в корзину кнопкой «В корзину» на его карточке.
+     * Добавляет товар в корзину кнопкой «В инвентарь» на его карточке.
      *
      * @param productName название товара (или уникальная часть названия)
      * @return этот же Page Object
      */
     public CatalogPage addToCart(String productName) {
         Allure.step("Добавить в корзину: «" + productName + "»",
-                () -> productCard(productName).getByTestId("add-to-cart-button").click());
+                () -> productCard(productName).getByTestId("add-to-cart-btn").click());
         return this;
     }
 
     /**
      * Возвращает локатор счётчика товаров на иконке корзины в шапке.
      *
-     * @return локатор {@code [data-testid=cart-count]}
+     * @return локатор {@code [data-testid=cart-badge]}
      */
     public Locator cartCounter() {
-        return byTestId("cart-count");
+        return byTestId("cart-badge");
     }
 
     /**

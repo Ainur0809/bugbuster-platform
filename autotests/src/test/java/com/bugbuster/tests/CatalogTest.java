@@ -26,30 +26,30 @@ class CatalogTest extends BaseTest {
     /**
      * Проверяет фильтрацию каталога по категории «Зелья».
      * <p>
-     * Ожидание: после выбора фильтра отображаются ровно 3 товара,
-     * и у каждой карточки категория {@code potion}.
-     * После возврата к фильтру «Все» снова видны все 8 товаров.
+     * Ожидание: после выбора фильтра отображаются ровно 2 товара,
+     * и у каждой карточки категория {@code potions}.
+     * После возврата к фильтру «Все» снова видны все 7 товаров.
      */
     @Test
     @Story("Фильтрация по категориям")
     @Severity(SeverityLevel.CRITICAL)
     @DisplayName("Фильтр «Зелья» показывает только зелья")
     void shouldFilterProductsByCategory() {
-        assertThat(catalog.productCards()).hasCount(8);
+        assertThat(catalog.productCards()).hasCount(7);
 
-        catalog.filterBy("potion");
+        catalog.filterBy("potions");
 
-        Allure.step("Проверить, что видны только 3 зелья", () -> {
-            assertThat(catalog.productCards()).hasCount(3);
+        Allure.step("Проверить, что видны только 2 зелья", () -> {
+            assertThat(catalog.productCards()).hasCount(2);
             List<String> categories = catalog.visibleCategories();
-            assertTrue(categories.stream().allMatch("potion"::equals),
-                    "В выдаче есть товары не из категории potion: " + categories);
+            assertTrue(categories.stream().allMatch("potions"::equals),
+                    "В выдаче есть товары не из категории potions: " + categories);
         });
 
         catalog.filterBy("all");
 
         Allure.step("Проверить, что фильтр «Все» возвращает полный каталог",
-                () -> assertThat(catalog.productCards()).hasCount(8));
+                () -> assertThat(catalog.productCards()).hasCount(7));
     }
 
     /**
@@ -67,7 +67,7 @@ class CatalogTest extends BaseTest {
 
         Allure.step("Проверить, что найдена ровно одна уточка за 250 SP", () -> {
             assertThat(catalog.productCards()).hasCount(1);
-            assertThat(catalog.productCards().getByTestId("product-name"))
+            assertThat(catalog.productCards().getByTestId("product-title"))
                     .hasText("Резиновая уточка всезнания");
             assertThat(catalog.productCards().getByTestId("product-price")).hasText("250 SP");
         });
@@ -76,7 +76,7 @@ class CatalogTest extends BaseTest {
     /**
      * Негативная проверка поиска: запрос, которому не соответствует ни один товар.
      * <p>
-     * Ожидание: карточек нет, показано сообщение «404: Артефакт не найден».
+     * Ожидание: карточек нет, показано сообщение «404: артефакт не найден».
      */
     @Test
     @Story("Поиск по каталогу")
@@ -88,7 +88,7 @@ class CatalogTest extends BaseTest {
         Allure.step("Проверить пустую выдачу и сообщение 404", () -> {
             assertThat(catalog.productCards()).hasCount(0);
             assertThat(catalog.emptyCatalogMessage()).isVisible();
-            assertThat(catalog.emptyCatalogMessage()).containsText("Артефакт не найден");
+            assertThat(catalog.emptyCatalogMessage()).containsText("артефакт не найден");
         });
     }
 }
