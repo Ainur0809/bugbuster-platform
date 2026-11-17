@@ -15,3 +15,9 @@ allure-report/
 # OS
 .DS_Store
 Thumbs.db
+
+# Allure 3 для Telegram-коллажа (собирается в CI)
+allure3-report/
+allure3-history.jsonl
+collage.png
+node_modules/

@@ -260,6 +260,35 @@ jobs:
           report_url: ${{ env.SITE_URL }}allure
           report_name: 'BugBuster Alchemy — автотесты'
 
+      # ---------------------------------------------------------------
+      # Коллаж для Telegram (qa-guru/allure-notifications) строится по отчёту Allure 3.
+      # Публичный отчёт выше остаётся на Allure 2 — этот нужен только для уведомления.
+      # Конфиги: notifications/allurerc.mjs (генерация) и notifications/config.json (коллаж).
+      # ---------------------------------------------------------------
+      - name: 🟢 Set up Node (Allure 3)
+        if: always()
+        uses: actions/setup-node@v6
+        with:
+          node-version: 26
+
+      # История прошлых запусков для графиков «динамики» на коллаже.
+      # Лежит в gh-pages рядом с отчётами: allure/allure3-history.jsonl.
+      # При первом запуске файла нет — Allure просто начнёт новую историю.
+      - name: 📚 Restore Allure 3 history
+        if: always()
+        working-directory: .
+        run: cp gh-pages-branch/allure/allure3-history.jsonl ./allure3-history.jsonl 2>/dev/null || echo "Истории пока нет — начинаем с нуля"
+
+      - name: 📊 Generate Allure 3 report (for Telegram collage)
+        if: always()
+        working-directory: .
+        run: |
+          npm install --no-save allure@3.14.3
+          npx allure generate autotests/build/allure-results --config notifications/allurerc.mjs
+          # Кладём обновлённую историю туда, что уйдёт в gh-pages/allure следующим шагом
+          mkdir -p allure-history
+          cp allure3-history.jsonl allure-history/allure3-history.jsonl
+
       # Публикуем отчёт в подпапку allure/ ветки gh-pages.
       # keep_files: true — НЕ трогаем магазин в корне ветки и старые отчёты.
       - name: 🌐 Publish Allure report to gh-pages/allure
@@ -273,77 +302,36 @@ jobs:
           keep_files: true
           commit_message: '📊 Allure report #${{ github.run_number }}'
 
-      # Отправляем итог в Telegram.
-      #  1. Через jq читаем статистику из allure-report/widgets/summary.json.
-      #  2. Собираем HTML-сообщение: статус, кто запустил, статистика, две ссылки.
-      #  3. Отправляем curl-ом в Telegram Bot API (sendMessage).
-      # Токен и chat_id берутся из секретов репозитория и не видны в логах.
-      - name: 📣 Send Telegram notification
+      # Без секретов Action упал бы в режиме live — проверяем заранее и просто пропускаем отправку.
+      - name: 🔐 Check Telegram secrets
+        id: telegram
         if: always()
         working-directory: .
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-          TESTS_OUTCOME: ${{ steps.tests.outcome }}
-          ACTOR: ${{ github.actor }}
-          EVENT: ${{ github.event_name }}
-          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-          COMMIT_MSG: ${{ github.event.head_commit.message }}
         run: |
-          if [ -z "$TELEGRAM_BOT_TOKEN" ] || [ -z "$TELEGRAM_CHAT_ID" ]; then
+          if [ -n "$TELEGRAM_BOT_TOKEN" ] && [ -n "$TELEGRAM_CHAT_ID" ]; then
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          else
             echo "::warning::Секреты TELEGRAM_* не заданы — уведомление пропущено"
-            exit 0
           fi
 
-          SUMMARY=allure-report/widgets/summary.json
-          if [ -f "$SUMMARY" ]; then
-            TOTAL=$(jq '.statistic.total' "$SUMMARY")
-            PASSED=$(jq '.statistic.passed' "$SUMMARY")
-            FAILED=$(jq '.statistic.failed + .statistic.broken' "$SUMMARY")
-            SKIPPED=$(jq '.statistic.skipped' "$SUMMARY")
-          else
-            TOTAL="?"; PASSED="?"; FAILED="?"; SKIPPED="?"
-          fi
-
-          # Человекочитаемое название триггера
-          case "$EVENT" in
-            push)              TRIGGER="push в main" ;;
-            schedule)          TRIGGER="по расписанию ⏰" ;;
-            workflow_dispatch) TRIGGER="вручную 🖐" ;;
-            *)                 TRIGGER="$EVENT" ;;
-          esac
-
-          if [ "$TESTS_OUTCOME" = "success" ]; then
-            STATUS="✅ <b>Успешно!</b> Прод чист, баги изгнаны."
-          else
-            STATUS="🚨 <b>Баги в проде!</b> Алхимики, срочно в Allure!"
-          fi
-
-          # Первая строка коммита, с экранированием символов HTML
-          COMMIT=$(printf '%s' "${COMMIT_MSG:-—}" | head -n1 | sed 's/&/\&amp;/g; s/</\&lt;/g; s/>/\&gt;/g')
-
-          REPORT_URL="${SITE_URL}allure/${GITHUB_RUN_NUMBER}/"
-
-          TEXT="⚗️ <b>BugBuster Alchemy — автотесты</b>
-          ${STATUS}
-
-          👤 Запустил: <b>${ACTOR}</b> (${TRIGGER})
-          📝 Коммит: <code>${GITHUB_SHA::7}</code> ${COMMIT}
-
-          📊 <b>Статистика</b>
-          Всего: ${TOTAL} | ✅ Пройдено: ${PASSED} | ❌ Упало: ${FAILED} | ⏭ Пропущено: ${SKIPPED}
-
-          🛒 <a href=\"${SITE_URL}\">Магазин</a>  ·  📈 <a href=\"${REPORT_URL}\">Allure-отчёт</a>  ·  ⚙️ <a href=\"${RUN_URL}\">Лог CI</a>"
-
-          # Убираем отступы YAML в начале строк
-          TEXT=$(printf '%s' "$TEXT" | sed 's/^ *//')
-
-          curl -sS -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
-            --data-urlencode "chat_id=${TELEGRAM_CHAT_ID}" \
-            --data-urlencode "text=${TEXT}" \
-            --data-urlencode "parse_mode=HTML" \
-            --data-urlencode "disable_web_page_preview=true" \
-            -o /dev/null -w "Telegram API HTTP %{http_code}\n"
+      # Итог в Telegram: картинка-коллаж (7 панелей) + статистика + ссылки на отчёт и лог CI.
+      # Токен и chat_id берутся из секретов репозитория и не видны в логах.
+      - name: 📣 Send Telegram notification (allure-notifications)
+        if: always() && steps.telegram.outputs.configured == 'true'
+        uses: qa-guru/allure-notifications@v6.3.2
+        with:
+          config: notifications/config.json
+          allure-folder: allure3-report/awesome
+          allure-results-folder: autotests/build/allure-results
+          report-url: ${{ env.SITE_URL }}allure/${{ github.run_number }}/
+          build-url: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          mode: live
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
 
       # Финальный «светофор»: если тесты упали — красим job в красный,
       # чтобы в GitHub (и на бейджах) было видно, что релиз сломан.
