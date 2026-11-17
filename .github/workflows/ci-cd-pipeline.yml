@@ -195,9 +195,10 @@ jobs:
       #  - allure_history: куда сложить новый отчёт (папка <run_number>/) + обновлённую историю;
       #  - report_url: базовый адрес отчётов, на него ведёт redirect из allure/index.html.
       # Пути здесь — от корня репозитория (у uses нет working-directory).
+      # Версия v1.15+: старые версии собирались из удалённого Docker-образа openjdk:8-jre-alpine и падали.
       - name: 📊 Generate Allure report with history
         if: always()
-        uses: simple-elf/allure-report-action@v1.12
+        uses: simple-elf/allure-report-action@v1.15
         with:
           allure_results: autotests/build/allure-results
           allure_report: allure-report
