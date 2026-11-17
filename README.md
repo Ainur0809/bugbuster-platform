@@ -76,12 +76,11 @@ bugbuster-platform/
    | Когда | Сообщение | Job |
    |---|---|---|
    | пайплайн стартовал (push, расписание, вручную) | 🚀 «Новая версия в пути!» | `notify-start` |
-   | тесты прошли | ✅ «Успешно!» + статистика и ссылка на Allure | `run-autotests` |
-   | тесты упали | 🚨 «Баги в проде!» + статистика и ссылка на Allure | `run-autotests` |
+   | тесты закончились (прошли или упали) | 📊 коллаж из 7 графиков + статистика + ссылки на Allure и лог CI ([allure-notifications](https://github.com/qa-guru/allure-notifications)) | `run-autotests` |
    | упал деплой магазина (тесты не запускались) | 💥 «Деплой магазина упал!» | `notify-deploy-failure` |
 
 ## Демо-баг
 
 В `shop/app.js` поменять `const CHAOS_MODE = false;` на `true` и запушить в `main`:
 промокод `DEPLOYFRIDAY` начнёт **прибавлять** 20% вместо скидки → упадёт E2E-тест
-`CheckoutTest.shouldBuyWithPromoCode` → в Telegram придёт «🚨 Баги в проде!» со скриншотом в Allure.
+`CheckoutTest.shouldBuyWithPromoCode` → в Telegram придёт коллаж с упавшим тестом (красный сектор на круговой диаграмме), а в Allure — скриншот падения.
