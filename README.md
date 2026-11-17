@@ -71,6 +71,15 @@ bugbuster-platform/
    - узнать `chat_id` канала (например, переслать сообщение из канала боту `@getidsbot`, вида `-100…`);
    - **Settings → Secrets and variables → Actions**: `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`.
 
+   Какие сообщения приходят в канал:
+
+   | Когда | Сообщение | Job |
+   |---|---|---|
+   | пайплайн стартовал (push, расписание, вручную) | 🚀 «Новая версия в пути!» | `notify-start` |
+   | тесты прошли | ✅ «Успешно!» + статистика и ссылка на Allure | `run-autotests` |
+   | тесты упали | 🚨 «Баги в проде!» + статистика и ссылка на Allure | `run-autotests` |
+   | упал деплой магазина (тесты не запускались) | 💥 «Деплой магазина упал!» | `notify-deploy-failure` |
+
 ## Демо-баг
 
 В `shop/app.js` поменять `const CHAOS_MODE = false;` на `true` и запушить в `main`:
